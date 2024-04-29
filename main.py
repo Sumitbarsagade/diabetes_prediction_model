@@ -2,14 +2,13 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import pickle
+from sklearn.preprocessing import StandardScaler
 import json
 import uvicorn
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-
-# Add middleware to enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # You can specify specific origins instead of "*" if needed
@@ -17,8 +16,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
-
-
+scaler = StandardScaler()
 
 class model_input(BaseModel):
     
@@ -51,15 +49,25 @@ def diabetes_pred(input_parameters : model_input):
     
     # input_list = [preg, glu, bp, skin, insulin, bmi, dpf, age]
     data = np.array([[preg, glu, bp, skin, insulin, bmi, dpf,age]])
-    # arr = np.array([[data1, data2, data3, data4]])
-    prediction = diabetes_model.predict(data)
-    # prediction = diabetes_model.predict([input_list])
+    input_data_reshaped = data.reshape(1,-1)
+    scaler.fit(input_data_reshaped)
+    std_data = scaler.transform(input_data_reshaped)
 
+    
+    # arr = np.array([[data1, data2, data3, data4]])
+    prediction = diabetes_model.predict(std_data)
+    # prediction = diabetes_model.predict([input_list])
+    
+    print(prediction)
 
     if (prediction[0] == 0):
         return 'The person is not diabetic'
     else:
         return 'The person is diabetic'
+
+
+
+
     
 
 
